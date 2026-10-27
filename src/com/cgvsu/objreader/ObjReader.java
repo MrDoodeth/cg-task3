@@ -1,38 +1,37 @@
 package com.cgvsu.objreader;
 
-import com.cgvsu.math.Vector2f;
-import com.cgvsu.math.Vector3f;
+import com.cgvsu.math.Vector2;
+import com.cgvsu.math.Vector3;
 import com.cgvsu.model.Model;
 import com.cgvsu.model.Polygon;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class ObjReader {
-
-	private static final String OBJ_VERTEX_TOKEN = "v";
-	private static final String OBJ_TEXTURE_TOKEN = "vt";
-	private static final String OBJ_NORMAL_TOKEN = "vn";
-	private static final String OBJ_FACE_TOKEN = "f";
-
 	public static Model read(String fileContent) {
 		Model result = new Model();
 
 		int lineInd = 0;
-		Scanner scanner = new Scanner(fileContent);
-		while (scanner.hasNextLine()) {
-			final String line = scanner.nextLine();
-			ArrayList<String> wordsInLine = new ArrayList<String>(Arrays.asList(line.split("\\s+")));
-			if (wordsInLine.isEmpty()) {
-				continue;
-			}
+		try (Scanner scanner = new Scanner(fileContent)) {
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine();
+				++lineInd;
+				int commentStart = line.indexOf('#');
+				if (commentStart >= 0) {
+					line = line.substring(0, commentStart);
+				}
+				line = line.trim();
+				if (line.isEmpty()) {
+					continue;
+				}
 
-			final String token = wordsInLine.get(0);
-			wordsInLine.remove(0);
+				ArrayList<String> wordsInLine = new ArrayList<>(Arrays.asList(line.split("\\s+")));
+				String token = wordsInLine.remove(0);
 
-			++lineInd;
-			switch (token) {
+				switch (token) {
 				// Для структур типа вершин методы написаны так, чтобы ничего не знать о внешней среде.
 				// Они принимают только то, что им нужно для работы, а возвращают только то, что могут создать.
 				// Исключение - индекс строки. Он прокидывается, чтобы выводить сообщение об ошибке.
@@ -43,11 +42,12 @@ public class ObjReader {
 				// А еще это портит читаемость
 				// И не стоит забывать про тесты. Чем проще вам задать данные для теста, проверить, что метод рабочий,
 				// тем лучше.
-				case OBJ_VERTEX_TOKEN -> result.vertices.add(parseVertex(wordsInLine, lineInd));
-				case OBJ_TEXTURE_TOKEN -> result.textureVertices.add(parseTextureVertex(wordsInLine, lineInd));
-				case OBJ_NORMAL_TOKEN -> result.normals.add(parseNormal(wordsInLine, lineInd));
-				case OBJ_FACE_TOKEN -> result.polygons.add(parseFace(wordsInLine, lineInd));
-				default -> {}
+					case "v" -> result.addVertex(parseVertex(wordsInLine, lineInd));
+					case "vt" -> result.addTextureVertex(parseTextureVertex(wordsInLine, lineInd));
+					case "vn" -> result.addNormal(parseNormal(wordsInLine, lineInd));
+					case "f" -> result.addPolygon(parseFace(wordsInLine, lineInd));
+					default -> {}
+				}
 			}
 		}
 
@@ -55,9 +55,13 @@ public class ObjReader {
 	}
 
 	// Всем методам кроме основного я поставил модификатор доступа protected, чтобы обращаться к ним в тестах
-	protected static Vector3f parseVertex(final ArrayList<String> wordsInLineWithoutToken, int lineInd) {
+	protected static Vector3 parseVertex(List<String> wordsInLineWithoutToken, int lineInd) {
+		if (wordsInLineWithoutToken.size() > 3) {
+			throw new ObjReaderException("Too many vertex arguments.", lineInd);
+		}
+
 		try {
-			return new Vector3f(
+			return new Vector3(
 					Float.parseFloat(wordsInLineWithoutToken.get(0)),
 					Float.parseFloat(wordsInLineWithoutToken.get(1)),
 					Float.parseFloat(wordsInLineWithoutToken.get(2)));
@@ -70,9 +74,9 @@ public class ObjReader {
 		}
 	}
 
-	protected static Vector2f parseTextureVertex(final ArrayList<String> wordsInLineWithoutToken, int lineInd) {
+	protected static Vector2 parseTextureVertex(List<String> wordsInLineWithoutToken, int lineInd) {
 		try {
-			return new Vector2f(
+			return new Vector2(
 					Float.parseFloat(wordsInLineWithoutToken.get(0)),
 					Float.parseFloat(wordsInLineWithoutToken.get(1)));
 
@@ -84,9 +88,9 @@ public class ObjReader {
 		}
 	}
 
-	protected static Vector3f parseNormal(final ArrayList<String> wordsInLineWithoutToken, int lineInd) {
+	protected static Vector3 parseNormal(List<String> wordsInLineWithoutToken, int lineInd) {
 		try {
-			return new Vector3f(
+			return new Vector3(
 					Float.parseFloat(wordsInLineWithoutToken.get(0)),
 					Float.parseFloat(wordsInLineWithoutToken.get(1)),
 					Float.parseFloat(wordsInLineWithoutToken.get(2)));
@@ -99,20 +103,19 @@ public class ObjReader {
 		}
 	}
 
-	protected static Polygon parseFace(final ArrayList<String> wordsInLineWithoutToken, int lineInd) {
-		ArrayList<Integer> onePolygonVertexIndices = new ArrayList<Integer>();
-		ArrayList<Integer> onePolygonTextureVertexIndices = new ArrayList<Integer>();
-		ArrayList<Integer> onePolygonNormalIndices = new ArrayList<Integer>();
+	protected static Polygon parseFace(List<String> wordsInLineWithoutToken, int lineInd) {
+		List<Integer> onePolygonVertexIndices = new ArrayList<>();
+		List<Integer> onePolygonTextureVertexIndices = new ArrayList<>();
+		List<Integer> onePolygonNormalIndices = new ArrayList<>();
 
 		for (String s : wordsInLineWithoutToken) {
 			parseFaceWord(s, onePolygonVertexIndices, onePolygonTextureVertexIndices, onePolygonNormalIndices, lineInd);
 		}
 
-		Polygon result = new Polygon();
-		result.setVertexIndices(onePolygonVertexIndices);
-		result.setTextureVertexIndices(onePolygonTextureVertexIndices);
-		result.setNormalIndices(onePolygonNormalIndices);
-		return result;
+		return new Polygon(
+				onePolygonVertexIndices,
+				onePolygonTextureVertexIndices,
+				onePolygonNormalIndices);
 	}
 
 	// Обратите внимание, что для чтения полигонов я выделил еще один вспомогательный метод.
@@ -120,9 +123,9 @@ public class ObjReader {
 	// В радикальных случаях не бойтесь выносить в отдельные методы и тестировать код из одной-двух строчек.
 	protected static void parseFaceWord(
 			String wordInLine,
-			ArrayList<Integer> onePolygonVertexIndices,
-			ArrayList<Integer> onePolygonTextureVertexIndices,
-			ArrayList<Integer> onePolygonNormalIndices,
+			List<Integer> onePolygonVertexIndices,
+			List<Integer> onePolygonTextureVertexIndices,
+			List<Integer> onePolygonNormalIndices,
 			int lineInd) {
 		try {
 			String[] wordIndices = wordInLine.split("/");

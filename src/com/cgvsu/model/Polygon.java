@@ -1,44 +1,55 @@
 package com.cgvsu.model;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
-public class Polygon {
+public final class Polygon {
+    private final List<Integer> vertexIndices;
+    private final List<Integer> textureVertexIndices;
+    private final List<Integer> normalIndices;
 
-    private ArrayList<Integer> vertexIndices;
-    private ArrayList<Integer> textureVertexIndices;
-    private ArrayList<Integer> normalIndices;
+    public Polygon(
+            List<Integer> vertexIndices,
+            List<Integer> textureVertexIndices,
+            List<Integer> normalIndices) {
+        this.vertexIndices = copyIndices(vertexIndices, "Vertex");
+        this.textureVertexIndices = copyIndices(textureVertexIndices, "Texture vertex");
+        this.normalIndices = copyIndices(normalIndices, "Normal");
 
-
-    public Polygon() {
-        vertexIndices = new ArrayList<Integer>();
-        textureVertexIndices = new ArrayList<Integer>();
-        normalIndices = new ArrayList<Integer>();
+        if (this.vertexIndices.size() < 3) {
+            throw new IllegalArgumentException("A polygon must contain at least three vertex indices.");
+        }
+        requireOptionalIndicesMatch(this.textureVertexIndices, "texture vertex");
+        requireOptionalIndicesMatch(this.normalIndices, "normal");
     }
 
-    public void setVertexIndices(ArrayList<Integer> vertexIndices) {
-        assert vertexIndices.size() >= 3;
-        this.vertexIndices = vertexIndices;
-    }
-
-    public void setTextureVertexIndices(ArrayList<Integer> textureVertexIndices) {
-        assert textureVertexIndices.size() >= 3;
-        this.textureVertexIndices = textureVertexIndices;
-    }
-
-    public void setNormalIndices(ArrayList<Integer> normalIndices) {
-        assert normalIndices.size() >= 3;
-        this.normalIndices = normalIndices;
-    }
-
-    public ArrayList<Integer> getVertexIndices() {
+    public List<Integer> getVertexIndices() {
         return vertexIndices;
     }
 
-    public ArrayList<Integer> getTextureVertexIndices() {
+    public List<Integer> getTextureVertexIndices() {
         return textureVertexIndices;
     }
 
-    public ArrayList<Integer> getNormalIndices() {
+    public List<Integer> getNormalIndices() {
         return normalIndices;
+    }
+
+    private List<Integer> copyIndices(List<Integer> indices, String type) {
+        Objects.requireNonNull(indices, type + " indices must not be null.");
+        for (Integer index : indices) {
+            Objects.requireNonNull(index, type + " indices must not be null.");
+            if (index < 0) {
+                throw new IllegalArgumentException(type + " indices must be non-negative.");
+            }
+        }
+        return List.copyOf(indices);
+    }
+
+    private void requireOptionalIndicesMatch(List<Integer> indices, String type) {
+        if (!indices.isEmpty() && indices.size() != vertexIndices.size()) {
+            throw new IllegalArgumentException(
+                    "A polygon must contain either no " + type + " indices or one for every vertex.");
+        }
     }
 }
