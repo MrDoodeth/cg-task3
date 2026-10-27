@@ -1,4 +1,4 @@
-package com.cgvsu.objreader;
+package com.cgvsu.obj;
 
 import com.cgvsu.math.Vector3;
 import org.junit.jupiter.api.Test;

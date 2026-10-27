@@ -1,7 +1,7 @@
 package com.cgvsu;
 
 import com.cgvsu.model.Model;
-import com.cgvsu.objreader.ObjReader;
+import com.cgvsu.obj.ObjReader;
 import com.cgvsu.obj.ObjWriter;
 
 import java.io.IOException;

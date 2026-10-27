@@ -1,4 +1,4 @@
-package com.cgvsu.objreader;
+package com.cgvsu.obj;
 
 import com.cgvsu.math.Vector2;
 import com.cgvsu.math.Vector3;
@@ -42,10 +42,10 @@ public class ObjReader {
 				// А еще это портит читаемость
 				// И не стоит забывать про тесты. Чем проще вам задать данные для теста, проверить, что метод рабочий,
 				// тем лучше.
-					case "v" -> result.addVertex(parseVertex(wordsInLine, lineInd));
-					case "vt" -> result.addTextureVertex(parseTextureVertex(wordsInLine, lineInd));
-					case "vn" -> result.addNormal(parseNormal(wordsInLine, lineInd));
-					case "f" -> result.addPolygon(parseFace(wordsInLine, lineInd));
+					case Obj.VERTEX_TOKEN -> result.addVertex(parseVertex(wordsInLine, lineInd));
+					case Obj.TEXTURE_TOKEN -> result.addTextureVertex(parseTextureVertex(wordsInLine, lineInd));
+					case Obj.NORMAL_TOKEN -> result.addNormal(parseNormal(wordsInLine, lineInd));
+					case Obj.FACE_TOKEN -> result.addPolygon(parseFace(wordsInLine, lineInd));
 					default -> {}
 				}
 			}
