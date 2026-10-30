@@ -40,9 +40,9 @@ public final class ObjWriter {
             int precision) {
         for (Vector3 vector : vectors) {
             result.append(token).append(' ')
-                    .append(format(vector.getX(), precision)).append(' ')
-                    .append(format(vector.getY(), precision)).append(' ')
-                    .append(format(vector.getZ(), precision)).append(LINE_SEPARATOR);
+                    .append(formatFloatRounding(vector.getX(), precision)).append(' ')
+                    .append(formatFloatRounding(vector.getY(), precision)).append(' ')
+                    .append(formatFloatRounding(vector.getZ(), precision)).append(LINE_SEPARATOR);
         }
     }
 
@@ -53,8 +53,8 @@ public final class ObjWriter {
             int precision) {
         for (Vector2 vector : vectors) {
             result.append(token).append(' ')
-                    .append(format(vector.getX(), precision)).append(' ')
-                    .append(format(vector.getY(), precision)).append(LINE_SEPARATOR);
+                    .append(formatFloatRounding(vector.getX(), precision)).append(' ')
+                    .append(formatFloatRounding(vector.getY(), precision)).append(LINE_SEPARATOR);
         }
     }
 
@@ -93,7 +93,7 @@ public final class ObjWriter {
         return modelIndex + 1;
     }
 
-    private static String format(float value, int precision) {
+    private static String formatFloatRounding(float value, int precision) {
         return String.format(Locale.ROOT, "%." + precision + "f", value);
     }
 }
